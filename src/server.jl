@@ -933,9 +933,23 @@ function strip_cell_options(source::AbstractString)
 end
 
 function wrap_with_python_boilerplate(code)
+    ast_sym = gensym("pyast")
+    tree_sym = gensym("pytree")
+    eval_or_exec_sym = gensym("should_eval_or_exec")
     """
     @isdefined(PythonCall) && PythonCall isa Module && Base.PkgId(PythonCall).uuid == Base.UUID("6099a3de-0909-46bc-b1f4-468b9a2dfc0d") || error("PythonCall must be imported to execute Python code cells with QuartoNotebookRunner")
-    @py $code
+    $ast_sym = PythonCall.pyimport("ast")
+    $tree_sym = $ast_sym.parse($code)
+    $eval_or_exec_sym = if PythonCall.pyconvert(Bool, $tree_sym.body)
+        PythonCall.pyisinstance($tree_sym.body[-1], $ast_sym.Expr)  
+    else 
+        false
+    end
+    if $eval_or_exec_sym
+        
+    else
+        
+    end
     """
 end
 
